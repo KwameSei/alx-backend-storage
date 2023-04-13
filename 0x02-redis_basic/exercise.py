@@ -79,7 +79,6 @@ class Cache:
             particular function """
         # Creating a wrapper function
         @functools.wraps(method)
-
         def wrapper(self, *args, **kwargs):
             """ Wrapper function """
             input_data = method.__qualname__ + ":inputs"
@@ -94,3 +93,21 @@ class Cache:
             return output
         # Returning the wrapper function
         return wrapper
+
+    def replay(method, cache):
+        """ Method that displays the history of calls of a particular
+            function """
+        input_data = method.__qualname__ + ":inputs"
+        output_data = method.__qualname__ + ":outputs"
+
+        inputs = cache._redis.lrange(input_data, 0, -1)
+        outputs = cache._redis.lrange(output_data, 0, -1)
+        number_of_calls = len(inputs)
+
+        print("{} was called {} times:".format(method.__qualname__,
+                                               number_of_calls))
+        for i, (in_data, out_data) in enumerate(zip(inputs, outputs)):
+            input_args = tuple(json.loads(in_data.decode('utf-8')))
+            output_args = json.loads(out_data.decode('utf-8'))
+            print("{}: {}(*{}) -> {}".format(i, method.__qualname__,
+                                             input_args, output_args))

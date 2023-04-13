@@ -3,6 +3,8 @@
 import redis
 from uuid import uuid4
 from typing import Union
+import functools
+import json
 
 
 class Cache:
@@ -71,3 +73,24 @@ class Cache:
         # Storing the input data in Redis using the random key
         self._redis.set(key, data)
         return key
+
+    def call_history(method):
+        """ Method that stores the history of inputs and outputs for a
+            particular function """
+        # Creating a wrapper function
+        @functools.wraps(method)
+
+        def wrapper(self, *args, **kwargs):
+            """ Wrapper function """
+            input_data = method.__qualname__ + ":inputs"
+            output_data = method.__qualname__ + ":outputs"
+            # Storing the input data in Redis using the random key
+            self._redis.rpush(input_data, json.dumps(args))
+
+            # Storing the output data in Redis using the random key
+            output = method(self, *args, **kwargs)
+            self._redis.rpush(output_data, json.dumps(output))
+
+            return output
+        # Returning the wrapper function
+        return wrapper

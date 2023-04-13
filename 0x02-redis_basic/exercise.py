@@ -45,3 +45,29 @@ class Cache:
         data = self._redis.get(key)
         # Converting the data to an integer
         return int.from_bytes(data, 'big')
+
+    def count_calls(self, f: callable) -> callable:
+        """ Method that counts how many times a function is called """
+        # Generating a random key
+        key = str(uuid4())
+        # Storing the input data in Redis using the random key
+        self._redis.set(key, 0)
+
+        # Creating a wrapper function
+        def wrapper(*args, **kwargs):
+            """ Wrapper function """
+            # Incrementing the counter
+            self._redis.incr(key)
+            # Calling the original function
+            return f(*args, **kwargs)
+        # Returning the wrapper function
+        return wrapper
+
+    @count_calls
+    def store(self, data: Union[str, bytes, int, float]) -> str:
+        """ Method the stores data """
+        # Generating a random key
+        key = str(uuid4())
+        # Storing the input data in Redis using the random key
+        self._redis.set(key, data)
+        return key

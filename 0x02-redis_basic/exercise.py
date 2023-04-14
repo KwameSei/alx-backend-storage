@@ -2,9 +2,10 @@
 """ Creating or writing string to Redis """
 import redis
 from uuid import uuid4
-from typing import Union
+from typing import Union, Optional, Callable
 import functools
 import json
+import sys
 
 
 class Cache:
@@ -111,3 +112,16 @@ class Cache:
             output_args = json.loads(out_data.decode('utf-8'))
             print("{}: {}(*{}) -> {}".format(i, method.__qualname__,
                                              input_args, output_args))
+            
+    def get(self, key: str, fn: Optional[Callable] = None) ->\
+            Union[str, bytes, int, float]:
+        """receiving value from the server"""
+        return fn(self._redis.get(key)) if fn else self._redis.get(key)
+
+    def get_int(self, data_bytes: bytes) -> int:
+        """converting data from string to bytes"""
+        return int.from_bytes(data_bytes, sys.byteorder)
+
+    def get_str(self, data_bytes: bytes) -> str:
+        """converting data back to string"""
+        return data_bytes.decode('utf-8')
